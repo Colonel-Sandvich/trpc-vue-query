@@ -1,0 +1,49 @@
+{
+  "name": "trpc-vue-query",
+  "description": "",
+  "version": "0.0.1",
+  "author": "Colonel-Sandvich",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/"
+  },
+  "source": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc --build"
+  },
+  "keywords": [
+    "trpc",
+    "vue",
+    "vue-query"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tanstack/vue-query": "^5.0.0-rc.1",
+    "@trpc/client": "^10.37.1",
+    "@trpc/server": "^10.37.1"
+  },
+  "devDependencies": {
+    "@tanstack/vue-query": "5.0.0-rc.1",
+    "@trpc/client": "^10.38.4",
+    "@trpc/server": "^10.38.4",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2",
+    "vue-demi": "^0.14.6"
+  }
+}
