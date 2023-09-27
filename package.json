@@ -25,7 +25,9 @@
   ],
   "scripts": {
     "dev": "tsc --watch",
-    "build": "tsc --build"
+    "build": "tsc --build",
+    "lint": "tsc",
+    "ci": "pnpm run lint && pnpm run build"
   },
   "keywords": [
     "trpc",
