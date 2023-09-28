@@ -29,9 +29,7 @@ type DecorateProcedure<TProcedure extends AnyProcedure> =
       }
     : never;
 
-export type DecoratedProcedureRecord<
-  TProcedures extends ProcedureRouterRecord,
-> = {
+type DecoratedProcedureRecord<TProcedures extends ProcedureRouterRecord> = {
   [TKey in keyof TProcedures]: TProcedures[TKey] extends AnyRouter
     ? DecoratedProcedureRecord<TProcedures[TKey]["_def"]["record"]>
     : TProcedures[TKey] extends AnyProcedure

@@ -1,5 +1,3 @@
-import { DeepPartial } from "@trpc/server";
-
 /**
  * To allow easy interactions with groups of related queries, such as
  * invalidating all queries of a router, we use an array as the path when
@@ -30,20 +28,6 @@ export function getQueryKeyInternal(
   ];
 }
 
-type GetInfiniteQueryInput<
-  TProcedureInput,
-  TInputWithoutCursor = Omit<TProcedureInput, "cursor">,
-> = keyof TInputWithoutCursor extends never
-  ? undefined
-  : DeepPartial<TInputWithoutCursor> | undefined;
-
-/** @internal */
-export type GetQueryProcedureInput<TProcedureInput> = TProcedureInput extends {
-  cursor?: any;
-}
-  ? GetInfiniteQueryInput<TProcedureInput>
-  : DeepPartial<TProcedureInput> | undefined;
-
 export type QueryType = "any" | "infinite" | "query";
 
 export type QueryKey = [
@@ -51,10 +35,6 @@ export type QueryKey = [
   { input?: unknown; type?: Exclude<QueryType, "any"> }?,
 ];
 
-export type QueryKeyKnown<TInput, TType extends Exclude<QueryType, "any">> = [
-  string[],
-  { input?: GetQueryProcedureInput<TInput>; type: TType }?,
-];
 export type TRPCQueryKey = [
   string[],
   { input?: unknown; type?: Exclude<QueryType, "any"> }?,
