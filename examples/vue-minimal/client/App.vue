@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { createTRPCVueClient } from "@colonel-sandvich/trpc-vue-query";
 import { useIsFetching, useQueryClient } from "@tanstack/vue-query";
 import { httpBatchLink } from "@trpc/client";
-import { createTRPCVueClient } from "trpc-vue-query";
 import { ref } from "vue";
 import { AppRouter } from "../server";
 

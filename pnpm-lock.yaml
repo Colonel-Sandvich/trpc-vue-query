@@ -35,6 +35,9 @@ importers:
 
   examples/vue-minimal:
     dependencies:
+      '@colonel-sandvich/trpc-vue-query':
+        specifier: npm:@colonel-sandvich/trpc-vue-query@0.0.1
+        version: link:../..
       '@tanstack/vue-query':
         specifier: ^5.0.0-rc.1
         version: 5.0.0-rc.1(vue@3.3.4)
@@ -44,9 +47,6 @@ importers:
       '@trpc/server':
         specifier: ^10.38.4
         version: 10.38.4
-      trpc-vue-query:
-        specifier: workspace:*
-        version: link:../..
       vue:
         specifier: ^3.3.4
         version: 3.3.4
