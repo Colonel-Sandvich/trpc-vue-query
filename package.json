@@ -1,8 +1,8 @@
 {
-  "name": "trpc-vue-query",
+  "name": "@colonel-sandvich/trpc-vue-query",
   "private": false,
   "description": "",
-  "version": "0.0.2",
+  "version": "0.0.0",
   "author": "Colonel-Sandvich",
   "repository": {
     "type": "git",
@@ -11,14 +11,6 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    }
-  },
   "files": [
     "src",
     "dist"
