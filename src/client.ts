@@ -10,9 +10,10 @@ import {
 import { createFlatProxy, createRecursiveProxy } from "@trpc/server/shared";
 import {
   Invalidate,
+  QueryKey,
   UseMutation,
   UseQuery,
-  createNuxtProxyDecorationInternal,
+  createAugmentedClient,
 } from "./functions";
 
 type DecorateProcedure<TProcedure extends AnyProcedure> =
@@ -20,6 +21,7 @@ type DecorateProcedure<TProcedure extends AnyProcedure> =
     ? {
         useQuery: UseQuery<TProcedure>;
         invalidate: Invalidate<TProcedure>;
+        queryKey: QueryKey<TProcedure>;
       }
     : TProcedure extends AnyMutationProcedure
     ? {
@@ -37,38 +39,44 @@ export type DecoratedProcedureRecord<
     : never;
 };
 
-export function createTRPCVueClient<TRouter extends AnyRouter>(
-  opts: CreateTRPCClientOptions<TRouter>,
+/**
+ * Lots of generic magic to get the error to show.
+ */
+export function createTRPCVueClient<
+  TRouter = void,
+  Fallback extends AnyRouter = TRouter extends AnyRouter ? TRouter : AnyRouter,
+>(
+  opts: TRouter extends void
+    ? "Missing AppRouter generic. Refer to the docs: "
+    : CreateTRPCClientOptions<Fallback>,
   queryClient: QueryClient,
-) {
-  const client = createTRPCProxyClient<TRouter>(opts);
-
-  const augmentedClient = createNuxtProxyDecorationInternal(
-    client,
-    queryClient,
+): DecoratedProcedureRecord<Fallback["_def"]["record"]> {
+  const client = createTRPCProxyClient<Fallback>(
+    opts as CreateTRPCClientOptions<Fallback>,
   );
+
+  const augmentedClient = createAugmentedClient(client, queryClient);
+
   return createFlatProxy((key) => {
-    return createNuxtProxyDecoration(key, augmentedClient);
-  }) as DecoratedProcedureRecord<TRouter["_def"]["record"]>;
+    return createClientProxyDecoration(key, augmentedClient);
+  }) as DecoratedProcedureRecord<Fallback["_def"]["record"]>;
 }
 
-function createNuxtProxyDecoration(name: string, client: any) {
+function createClientProxyDecoration(
+  name: string,
+  client: ReturnType<typeof createAugmentedClient>,
+) {
   return createRecursiveProxy((opts) => {
     const args = opts.args;
 
     const pathCopy = [name, ...opts.path];
 
-    // The last arg is for instance `.useMutation` or `.useQuery()`
-    const lastArg = pathCopy.pop()!;
+    // The last arg is `.useQuery()` or `.useMutation()` etc.
+    const lastArg = pathCopy.pop()! as keyof typeof client;
 
     // The `path` ends up being something like `post.byId`
     const path = pathCopy.join(".");
 
-    return client[lastArg](path, ...args);
-
-    // // Expose queryKey helper
-    // if (lastArg === "getQueryKey") {
-    //   return getArrayQueryKey([path, input], (rest[0] as any) ?? "any");
-    // }
+    return (client[lastArg] as Function)(path, ...args);
   });
 }

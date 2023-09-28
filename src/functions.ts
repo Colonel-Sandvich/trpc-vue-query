@@ -27,10 +27,10 @@ import {
   inferProcedureInput,
 } from "@trpc/server";
 import { inferTransformedProcedureOutput } from "@trpc/server/shared";
-import { getQueryKeyInternal } from "./helpers";
+import { TRPCQueryKey, getQueryKeyInternal } from "./helpers";
 import { cloneDeepUnref } from "./utils";
 
-export function createNuxtProxyDecorationInternal<TRouter extends AnyRouter>(
+export function createAugmentedClient<TRouter extends AnyRouter>(
   trpcClient: inferRouterProxyClient<TRouter>,
   queryClient: QueryClient,
 ) {
@@ -42,6 +42,7 @@ export function createNuxtProxyDecorationInternal<TRouter extends AnyRouter>(
     useQuery,
     useMutation,
     invalidate,
+    queryKey: queryKeyInternal,
   };
 }
 
@@ -60,7 +61,7 @@ function useQueryInternal<
   TData = inferTransformedProcedureOutput<TProcedure>,
 >(
   this: { trpcClient: any },
-  path: string & keyof TProcedure,
+  path: string,
   input: Input<TProcedure>,
   opts?: UseQueryTRPCOptions<TData>,
 ): UseQueryReturnType<TData, TRPCClientErrorLike<TProcedure>> {
@@ -77,14 +78,9 @@ function useQueryInternal<
   return query;
 }
 
-export type UseQuery<TProcedure extends AnyQueryProcedure> =
-  typeof useQueryInternal<TProcedure> extends (
-    a: any,
-    input: infer B,
-    opts: infer C,
-  ) => infer R
-    ? (input: Prettify<B>, opts?: Prettify<C>) => R
-    : never;
+export type UseQuery<TProcedure extends AnyQueryProcedure> = StripPath<
+  typeof useQueryInternal<TProcedure>
+>;
 
 type UseMutationTRPCOptions<TData> = UseMutationOptions<TData> &
   TRPCRequestOptions;
@@ -97,7 +93,7 @@ function useMutationInternal<
   TContext = unknown,
 >(
   this: { trpcClient: any },
-  path: string & keyof TProcedure,
+  path: string,
   opts?: UseMutationTRPCOptions<TData>,
 ): UseMutationReturnType<TData, TError, TVariables, TContext> {
   const trpc = opts?.trpc;
@@ -110,17 +106,13 @@ function useMutationInternal<
   return query;
 }
 
-export type UseMutation<TProcedure extends AnyMutationProcedure> =
-  typeof useMutationInternal<TProcedure> extends (
-    a: any,
-    opts: infer B,
-  ) => infer R
-    ? (opts?: Prettify<B>) => R
-    : never;
+export type UseMutation<TProcedure extends AnyMutationProcedure> = StripPath<
+  typeof useMutationInternal<TProcedure>
+>;
 
 async function invalidateInternal<TProcedure extends AnyQueryProcedure>(
   this: { queryClient: QueryClient },
-  path: string & keyof TProcedure,
+  path: string,
   input?: Input<TProcedure>,
   filters?: InvalidateQueryFilters,
   opts?: InvalidateOptions,
@@ -130,15 +122,26 @@ async function invalidateInternal<TProcedure extends AnyQueryProcedure>(
   await this.queryClient.invalidateQueries({ ...filters, queryKey }, opts);
 }
 
-export type Invalidate<TProcedure extends AnyQueryProcedure> =
-  typeof invalidateInternal<TProcedure> extends (
-    a: any,
-    input?: infer B,
-    filters?: infer C,
-    opts?: infer D,
-  ) => infer R
-    ? (input?: Prettify<B>, filters?: Prettify<C>, opts?: Prettify<D>) => R
-    : never;
+export type Invalidate<TProcedure extends AnyQueryProcedure> = StripPath<
+  typeof invalidateInternal<TProcedure>
+>;
+
+function queryKeyInternal<TProcedure extends AnyQueryProcedure>(
+  path: string,
+  input: Input<TProcedure>,
+): TRPCQueryKey {
+  return getQueryKeyInternal([path], input, "query");
+}
+
+export type QueryKey<TProcedure extends AnyQueryProcedure> = StripPath<
+  typeof queryKeyInternal<TProcedure>
+>;
+
+type StripPath<T> = T extends (path: any, ...args: infer A) => infer R
+  ? (...args: PrettifyList<A>) => R
+  : never;
+
+type PrettifyList<T extends any[]> = [...{ [P in keyof T]: Prettify<T[P]> }];
 
 type Prettify<T> = T extends MaybeRef<void | undefined>
   ? void | undefined

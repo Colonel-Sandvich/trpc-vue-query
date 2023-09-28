@@ -5,7 +5,7 @@
   "author": "Colonel-Sandvich",
   "repository": {
     "type": "git",
-    "url": "https://github.com/"
+    "url": "https://github.com/Colonel-Sandvich/trpc-vue-query"
   },
   "source": "./src/index.ts",
   "main": "./dist/index.js",
