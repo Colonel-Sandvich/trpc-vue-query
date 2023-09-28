@@ -2,6 +2,12 @@
 
 A simple package to bridge the gap between [TRPC](https://trpc.io/) and [TanStack Query for Vue](https://tanstack.com/query/v5/docs/vue/overview) much like how TRPC has their own in-house [React Query Integration](https://trpc.io/docs/client/react)
 
+## Install
+
+`pnpm i @colonel-sandvich/trpc-vue-query`
+
+And then refer to the `vue-minimal` example to see how to set up the client
+
 ## Quickstart for testing `examples/vue-minimal`
 
 `pnpm i` Anywhere
