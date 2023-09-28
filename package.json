@@ -28,7 +28,7 @@
     "build": "tsup src --format cjs,esm --dts",
     "lint": "tsc",
     "ci": "pnpm run lint && pnpm run build",
-    "release": "pnpm run ci && pnpm changset publish"
+    "release": "pnpm run ci && pnpm changeset publish"
   },
   "keywords": [
     "trpc",
