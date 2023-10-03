@@ -36,9 +36,9 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
-    "@tanstack/vue-query": "^5.0.0-rc.1",
-    "@trpc/client": "^10.38.4",
-    "@trpc/server": "^10.38.4",
+    "@tanstack/vue-query": "5.0.0-rc.4",
+    "@trpc/client": "^10.38.5",
+    "@trpc/server": "^10.38.5",
     "prettier": "^3.0.3",
     "tsup": "^7.2.0",
     "typescript": "^5.2.2",

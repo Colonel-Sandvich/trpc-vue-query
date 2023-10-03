@@ -1,4 +1,8 @@
-import { QueryClient } from "@tanstack/vue-query";
+import {
+  InvalidateOptions,
+  InvalidateQueryFilters,
+  QueryClient,
+} from "@tanstack/vue-query";
 import { CreateTRPCClientOptions, createTRPCProxyClient } from "@trpc/client";
 import {
   AnyMutationProcedure,
@@ -26,15 +30,25 @@ type DecorateProcedure<TProcedure extends AnyProcedure> =
     : TProcedure extends AnyMutationProcedure
     ? {
         useMutation: UseMutation<TProcedure>;
+        mutationKey: QueryKey<TProcedure>;
       }
     : never;
 
 type DecoratedProcedureRecord<TProcedures extends ProcedureRouterRecord> = {
   [TKey in keyof TProcedures]: TProcedures[TKey] extends AnyRouter
-    ? DecoratedProcedureRecord<TProcedures[TKey]["_def"]["record"]>
+    ? DecoratedProcedureRecord<TProcedures[TKey]["_def"]["record"]> &
+        DecorateRouter
     : TProcedures[TKey] extends AnyProcedure
     ? DecorateProcedure<TProcedures[TKey]>
     : never;
+};
+
+type DecorateRouter = {
+  invalidate(
+    input?: undefined,
+    filters?: InvalidateQueryFilters,
+    options?: InvalidateOptions,
+  ): Promise<void>;
 };
 
 /**
@@ -45,7 +59,7 @@ export function createTRPCVueClient<
   Fallback extends AnyRouter = TRouter extends AnyRouter ? TRouter : AnyRouter,
 >(
   opts: TRouter extends void
-    ? "Missing AppRouter generic. Refer to the docs: "
+    ? "Missing AppRouter generic. Refer to the docs: https://trpc.io/docs/client/vanilla/setup#3-initialize-the-trpc-client"
     : CreateTRPCClientOptions<Fallback>,
   queryClient: QueryClient,
 ): DecoratedProcedureRecord<Fallback["_def"]["record"]> {

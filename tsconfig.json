@@ -5,7 +5,7 @@
     "lib": ["ESNext"],
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "strict": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -15,6 +15,7 @@
     "noUncheckedIndexedAccess": true,
     "strictNullChecks": true,
     "declaration": true,
+    "declarationMap": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true

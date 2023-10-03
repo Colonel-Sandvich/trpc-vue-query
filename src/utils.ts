@@ -1,5 +1,4 @@
-import { MaybeRefDeep } from "@tanstack/vue-query/build/modern/types";
-import { isRef, unref } from "vue-demi";
+import { Ref, UnwrapRef, isRef, unref } from "vue-demi";
 
 export function cloneDeep<T>(
   value: MaybeRefDeep<T>,
@@ -49,3 +48,37 @@ function isPlainObject(value: unknown): value is Object {
   const prototype = Object.getPrototypeOf(value);
   return prototype === null || prototype === Object.prototype;
 }
+
+type Primitive = string | number | boolean | bigint | symbol | undefined | null;
+type UnwrapLeaf =
+  | Primitive
+  | Function
+  | Date
+  | Error
+  | RegExp
+  | Map<any, any>
+  | WeakMap<any, any>
+  | Set<any>
+  | WeakSet<any>;
+
+export type MaybeRef<T> = Ref<T> | T;
+
+export type MaybeRefDeep<T> = MaybeRef<
+  T extends Function
+    ? T
+    : T extends object
+    ? {
+        [Property in keyof T]: MaybeRefDeep<T[Property]>;
+      }
+    : T
+>;
+
+export type DeepUnwrapRef<T> = T extends UnwrapLeaf
+  ? T
+  : T extends Ref<infer U>
+  ? DeepUnwrapRef<U>
+  : T extends {}
+  ? {
+      [Property in keyof T]: DeepUnwrapRef<T[Property]>;
+    }
+  : UnwrapRef<T>;
