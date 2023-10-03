@@ -1,20 +1,9 @@
 <script setup lang="ts">
-import { createTRPCVueClient } from "@colonel-sandvich/trpc-vue-query";
-import { useIsFetching, useQueryClient } from "@tanstack/vue-query";
-import { httpBatchLink } from "@trpc/client";
+import { useIsFetching } from "@tanstack/vue-query";
 import { ref } from "vue";
-import { AppRouter } from "../server";
+import { useTrpc } from "./trpc";
 
-const trpc = createTRPCVueClient<AppRouter>(
-  {
-    links: [
-      httpBatchLink({
-        url: "http://localhost:3000",
-      }),
-    ],
-  },
-  useQueryClient(),
-);
+const trpc = useTrpc();
 
 const {
   data: helloName,
@@ -23,7 +12,7 @@ const {
   error,
 } = trpc.helloName.useQuery();
 
-const newName = ref<string>("Jeff");
+const newName = ref("Jeff");
 
 const { mutate } = trpc.changeName.useMutation({
   onSuccess: () => trpc.helloName.invalidate(),
@@ -35,12 +24,15 @@ const isFetchingViaKey = useIsFetching({
 </script>
 
 <template>
-  <p>Hello World!</p>
+  <h1>Typical usage of `useQuery` and `useMutation`</h1>
   <p v-if="isError">Error!! {{ error }}</p>
   <p v-if="isFetching">Loading...</p>
   <p v-if="!isFetching && helloName">{{ helloName }}</p>
   <p>Not your name?</p>
   <input v-model="newName" />
   <button @click="() => mutate(newName)">Change my name!</button>
-  <p>{{ isFetchingViaKey ? true : false }}</p>
+  <p>
+    Result of `useIsFetching` with query key:
+    {{ isFetchingViaKey ? true : false }}
+  </p>
 </template>
