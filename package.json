@@ -2,7 +2,7 @@
   "name": "@colonel-sandvich/trpc-vue-query",
   "private": false,
   "description": "",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Colonel-Sandvich",
   "type": "module",
   "repository": {
