@@ -16,8 +16,10 @@
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "noEmit": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["src"]
+  "include": ["src/**/*.ts"]
 }
