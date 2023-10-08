@@ -1,0 +1,6 @@
+{
+  "bracketSameLine": true,
+  "singleAttributePerLine": true,
+  "arrowParens": "always",
+  "tabWidth": 2
+}
