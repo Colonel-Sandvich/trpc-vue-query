@@ -2,10 +2,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "./dist",
-    "lib": ["ESNext"],
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "strict": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
@@ -17,8 +16,8 @@
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["src"]
 }
