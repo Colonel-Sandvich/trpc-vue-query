@@ -18,7 +18,7 @@ import {
   UseMutation,
   UseQuery,
   createAugmentedClient,
-} from "./functions";
+} from "./functions.ts";
 
 type DecorateProcedure<TProcedure extends AnyProcedure> =
   TProcedure extends AnyQueryProcedure
@@ -54,7 +54,7 @@ type DecorateRouter = {
 /**
  * Lots of generic magic to get the error to show.
  */
-export function createTRPCVueClient<
+export function createTrpcVueClient<
   TRouter = void,
   Fallback extends AnyRouter = TRouter extends AnyRouter ? TRouter : AnyRouter,
 >(
@@ -71,7 +71,7 @@ export function createTRPCVueClient<
 
   return createFlatProxy((key) => {
     return createClientProxyDecoration(key, augmentedClient);
-  }) as DecoratedProcedureRecord<Fallback["_def"]["record"]>;
+  });
 }
 
 function createClientProxyDecoration(
