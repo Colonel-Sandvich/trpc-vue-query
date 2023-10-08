@@ -1,17 +1,17 @@
-import { createTRPCVueClient } from "@colonel-sandvich/trpc-vue-query";
+import { createTrpcVueClient } from "@colonel-sandvich/trpc-vue-query";
 import { useQueryClient } from "@tanstack/vue-query";
 import { httpBatchLink } from "@trpc/client";
 import { ref } from "vue";
 import { AppRouter } from "../../server";
 
-const trpcRef = ref<ReturnType<typeof createTRPCVueClient<AppRouter>>>();
+const trpcRef = ref<ReturnType<typeof createTrpcVueClient<AppRouter>>>();
 
 export function useTrpc() {
   if (trpcRef.value) {
     return trpcRef.value;
   }
 
-  const trpc = createTRPCVueClient<AppRouter>(
+  const trpc = createTrpcVueClient<AppRouter>(
     {
       links: [
         httpBatchLink({

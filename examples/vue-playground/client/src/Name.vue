@@ -14,7 +14,7 @@ const {
 
 const newName = ref("Jeff");
 
-const { mutate } = trpc.changeName.useMutation({
+const { mutate, variables } = trpc.changeName.useMutation({
   onSuccess: () => trpc.helloName.invalidate(),
 });
 
@@ -30,9 +30,10 @@ const isFetchingViaKey = useIsFetching({
   <p v-if="!isFetching && helloName">{{ helloName }}</p>
   <p>Not your name?</p>
   <input v-model="newName" />
-  <button @click="() => mutate(newName)">Change my name!</button>
+  <button @click="() => mutate({ input: newName })">Change my name!</button>
   <p>
     Result of `useIsFetching` with query key:
     {{ isFetchingViaKey ? true : false }}
   </p>
+  <p v-if="variables">{{ variables.input }}</p>
 </template>
