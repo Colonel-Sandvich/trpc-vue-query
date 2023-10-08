@@ -1,5 +1,14 @@
 # trpc-vue-query
 
+## 0.2.0
+
+### Minor Changes
+
+- 100b63e: Rename `createTRPCVueClient` -> `createTrpcVueClient`
+  Add `createNuxtApiHandler`, `createH3ApiHandler` (alias) to correctly capture tRPC client calls in nuxt/h3
+  Add `customFetchWrapper` so Nuxt users can have correctly working SSR when using tRPC
+  Fix various types surrounding `useMutation`
+
 ## 0.1.0
 
 ### Minor Changes
