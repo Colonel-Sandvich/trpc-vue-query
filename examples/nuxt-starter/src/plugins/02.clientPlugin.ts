@@ -4,7 +4,7 @@ import {
 } from "@colonel-sandvich/trpc-vue-query";
 import { useQueryClient } from "@tanstack/vue-query";
 import { httpBatchLink } from "@trpc/client";
-import { AppRouter } from "../server/routers";
+import type { AppRouter } from "../server/routers";
 
 export default defineNuxtPlugin(() => {
   const headers = useRequestHeaders();

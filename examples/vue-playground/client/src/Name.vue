@@ -35,5 +35,5 @@ const isFetchingViaKey = useIsFetching({
     Result of `useIsFetching` with query key:
     {{ isFetchingViaKey ? true : false }}
   </p>
-  <p v-if="variables">{{ variables.input }}</p>
+  <p v-if="variables">Optimistically updated: {{ variables.input }}</p>
 </template>

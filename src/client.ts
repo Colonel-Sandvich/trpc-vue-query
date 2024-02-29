@@ -3,7 +3,11 @@ import {
   InvalidateQueryFilters,
   QueryClient,
 } from "@tanstack/vue-query";
-import { CreateTRPCClientOptions, createTRPCProxyClient } from "@trpc/client";
+import {
+  CreateTRPCClientOptions,
+  CreateTRPCProxyClient,
+  createTRPCProxyClient,
+} from "@trpc/client";
 import {
   AnyMutationProcedure,
   AnyProcedure,
@@ -28,19 +32,19 @@ type DecorateProcedure<TProcedure extends AnyProcedure> =
         queryKey: QueryKey<TProcedure>;
       }
     : TProcedure extends AnyMutationProcedure
-    ? {
-        useMutation: UseMutation<TProcedure>;
-        mutationKey: QueryKey<TProcedure>;
-      }
-    : never;
+      ? {
+          useMutation: UseMutation<TProcedure>;
+          mutationKey: QueryKey<TProcedure>;
+        }
+      : never;
 
 type DecoratedProcedureRecord<TProcedures extends ProcedureRouterRecord> = {
   [TKey in keyof TProcedures]: TProcedures[TKey] extends AnyRouter
     ? DecoratedProcedureRecord<TProcedures[TKey]["_def"]["record"]> &
         DecorateRouter
     : TProcedures[TKey] extends AnyProcedure
-    ? DecorateProcedure<TProcedures[TKey]>
-    : never;
+      ? DecorateProcedure<TProcedures[TKey]>
+      : never;
 };
 
 type DecorateRouter = {
@@ -49,6 +53,12 @@ type DecorateRouter = {
     filters?: InvalidateQueryFilters,
     options?: InvalidateOptions,
   ): Promise<void>;
+};
+
+type TrpcVueClient<TRouter extends AnyRouter> = DecoratedProcedureRecord<
+  TRouter["_def"]["record"]
+> & {
+  client: CreateTRPCProxyClient<TRouter>;
 };
 
 /**
@@ -62,7 +72,7 @@ export function createTrpcVueClient<
     ? "Missing AppRouter generic. Refer to the docs: https://trpc.io/docs/client/vanilla/setup#3-initialize-the-trpc-client"
     : CreateTRPCClientOptions<Fallback>,
   queryClient: QueryClient,
-): DecoratedProcedureRecord<Fallback["_def"]["record"]> {
+): TrpcVueClient<Fallback> {
   const client = createTRPCProxyClient<Fallback>(
     opts as CreateTRPCClientOptions<Fallback>,
   );
@@ -70,25 +80,21 @@ export function createTrpcVueClient<
   const augmentedClient = createAugmentedClient(client, queryClient);
 
   return createFlatProxy((key) => {
-    return createClientProxyDecoration(key, augmentedClient);
-  });
-}
+    if (key === "client") {
+      return client;
+    }
+    return createRecursiveProxy((opts) => {
+      const args = opts.args;
 
-function createClientProxyDecoration(
-  name: string,
-  client: ReturnType<typeof createAugmentedClient>,
-) {
-  return createRecursiveProxy((opts) => {
-    const args = opts.args;
+      const pathCopy = [key, ...opts.path];
 
-    const pathCopy = [name, ...opts.path];
+      // The last arg is `.useQuery()` or `.useMutation()` etc.
+      const lastArg = pathCopy.pop()! as keyof typeof augmentedClient;
 
-    // The last arg is `.useQuery()` or `.useMutation()` etc.
-    const lastArg = pathCopy.pop()! as keyof typeof client;
+      // The `path` ends up being something like `post.byId`
+      const path = pathCopy.join(".");
 
-    // The `path` ends up being something like `post.byId`
-    const path = pathCopy.join(".");
-
-    return (client[lastArg] as Function)(path, ...args);
+      return (augmentedClient as any)[lastArg](path, ...args);
+    });
   });
 }
