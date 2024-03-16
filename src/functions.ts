@@ -112,7 +112,7 @@ export type UseMutation<
   TVariables = Input<TProcedure>,
   TResult = MutationResult<TData, TError, inferProcedureInput<TProcedure>>,
 > = (
-  options: MaybeRefDeep<
+  options?: MaybeRefDeep<
     CustomiseMutationOptionsKeys<MutationOptions<TData, TError, TVariables>>
   >,
 ) => UseMutationReturnType<TData, TError, TVariables, unknown, TResult>;
