@@ -1,5 +1,11 @@
 # trpc-vue-query
 
+## 0.4.0
+
+### Minor Changes
+
+- 45a71c8: Add {get/set}QueryData functions
+
 ## 0.3.0
 
 ### Minor Changes
