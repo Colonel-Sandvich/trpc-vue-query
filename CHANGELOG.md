@@ -1,5 +1,11 @@
 # trpc-vue-query
 
+## 0.4.1
+
+### Patch Changes
+
+- 7f7cb41: (fix): Make options argument of `useMutation` optional
+
 ## 0.4.0
 
 ### Minor Changes
