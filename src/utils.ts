@@ -1,4 +1,11 @@
-import { isRef, unref } from "vue-demi";
+import {
+  MaybeRefOrGetter,
+  isReactive,
+  isRef,
+  reactive,
+  toRefs,
+  unref,
+} from "vue-demi";
 import { MaybeRefDeep } from "./typeUtils.ts";
 
 export function cloneDeep<T>(
@@ -48,4 +55,18 @@ function isPlainObject(value: unknown): value is Object {
 
   const prototype = Object.getPrototypeOf(value);
   return prototype === null || prototype === Object.prototype;
+}
+
+export function maybeReactiveToRefs(
+  obj: MaybeRefOrGetter<Record<string, unknown>>,
+) {
+  if (isReactive(obj)) {
+    return toRefs(obj);
+  }
+
+  if (isRef(obj)) {
+    return toRefs(reactive(obj.value));
+  }
+
+  return obj;
 }

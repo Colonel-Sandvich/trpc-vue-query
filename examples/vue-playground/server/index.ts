@@ -6,14 +6,14 @@ let name = "Jeff";
 
 const appRouter = router({
   helloName: sleepyProcedure.query(() => `Hello there, ${name}!`),
-  reactiveToInput: publicProcedure
-    .input(z.number())
-    .query(({ input }) => `Changed! ${input}`),
-  changeName: publicProcedure
+  changeName: sleepyProcedure
     .input(z.object({ input: z.string() }))
     .mutation(({ input }) => {
       name = input.input;
     }),
+  reactiveToInput: publicProcedure
+    .input(z.number())
+    .query(({ input }) => `Changed! ${input}`),
   deep: router({
     deeper: router({
       all: sleepyProcedure.query(() => "deep.deeper.all"),

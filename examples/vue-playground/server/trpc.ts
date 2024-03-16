@@ -15,7 +15,7 @@ export const publicProcedure = t.procedure;
 
 const sleepyMiddleware = experimental_standaloneMiddleware().create(
   async (opts) => {
-    await sleep(500);
+    await sleep(1000);
     return opts.next();
   },
 );

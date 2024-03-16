@@ -12,6 +12,7 @@ const deepAll = trpc.deep.all.useQuery();
 
 <template>
   <h1>Demonstrates router level invalidation of queries</h1>
+  <h3>All procedures are deliberately delayed by 1 second</h3>
   <p v-if="deeperAll.isFetching.value">Loading deep.deeper.all...</p>
   <p v-else>{{ deeperAll.data }}</p>
   <p v-if="deeperById.isFetching.value">Loading deep.deeper.byId...</p>
