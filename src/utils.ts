@@ -48,7 +48,7 @@ export function cloneDeepUnref<T>(obj: MaybeRefDeep<T>): T {
   });
 }
 
-function isPlainObject(value: unknown): value is Object {
+export function isPlainObject(value: unknown): value is Object {
   if (Object.prototype.toString.call(value) !== "[object Object]") {
     return false;
   }

@@ -25,6 +25,7 @@ import {
   UseQuery,
   createAugmentedClient,
 } from "./functions.ts";
+import { isPlainObject } from "./utils.ts";
 
 type DecorateProcedure<TProcedure extends AnyProcedure> =
   TProcedure extends AnyQueryProcedure
@@ -59,27 +60,19 @@ type DecorateRouter = {
   ): Promise<void>;
 };
 
-type TrpcVueClient<TRouter extends AnyRouter> = DecoratedProcedureRecord<
+export type TrpcVueClient<TRouter extends AnyRouter> = DecoratedProcedureRecord<
   TRouter["_def"]["record"]
 > & {
   client: CreateTRPCProxyClient<TRouter>;
 };
 
-/**
- * Lots of generic magic to get the error to show.
- */
-export function createTrpcVueClient<
-  TRouter = void,
-  Fallback extends AnyRouter = TRouter extends AnyRouter ? TRouter : AnyRouter,
->(
-  opts: TRouter extends void
-    ? "Missing AppRouter generic. Refer to the docs: https://trpc.io/docs/client/vanilla/setup#3-initialize-the-trpc-client"
-    : CreateTRPCClientOptions<Fallback>,
+export function createTrpcVueClient<TRouter extends AnyRouter>(
+  opts: CreateTRPCClientOptions<TRouter> | CreateTRPCProxyClient<TRouter>,
   queryClient: QueryClient,
-): TrpcVueClient<Fallback> {
-  const client = createTRPCProxyClient<Fallback>(
-    opts as CreateTRPCClientOptions<Fallback>,
-  );
+): TrpcVueClient<TRouter> {
+  const client = isPlainObject(opts)
+    ? createTRPCProxyClient(opts as CreateTRPCClientOptions<TRouter>)
+    : (opts as CreateTRPCProxyClient<TRouter>);
 
   const augmentedClient = createAugmentedClient(client, queryClient);
 
@@ -98,7 +91,7 @@ export function createTrpcVueClient<
       // The `path` ends up being something like `post.byId`
       const path = pathCopy.join(".");
 
-      return (augmentedClient as any)[lastArg](path, ...args);
+      return (augmentedClient[lastArg] as Function)(path, ...args);
     });
   });
 }

@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useTrpc } from "./trpc";
-
-const trpc = useTrpc();
+import { useClient } from "./composables/useClient";
 
 const counter = ref(0);
 
 const enabled = ref(true);
 
-const { data, isFetching } = trpc.reactiveToInput.useQuery(counter, {
+const client = useClient();
+const { data, isFetching } = client.reactiveToInput.useQuery(counter, {
   enabled,
 });
 </script>
@@ -19,6 +18,6 @@ const { data, isFetching } = trpc.reactiveToInput.useQuery(counter, {
   <p v-if="isFetching">Loading...</p>
   <p v-if="data">{{ data }}</p>
   <button @click="() => counter++">Change</button>
-  <p>Reactive Query Key: {{ trpc.reactiveToInput.queryKey(counter) }}</p>
+  <p>Reactive Query Key: {{ client.reactiveToInput.queryKey(counter) }}</p>
   <button @click="() => (enabled = !enabled)">Toggle Query Enabled</button>
 </template>

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { useTrpc } from "./trpc";
+import { useClient } from "./composables/useClient";
 
-const trpc = useTrpc();
+const client = useClient();
 
-const deeperAll = trpc.deep.deeper.all.useQuery();
+const deeperAll = client.deep.deeper.all.useQuery();
 
-const deeperById = trpc.deep.deeper.byId.useQuery({ id: 1 });
+const deeperById = client.deep.deeper.byId.useQuery({ id: 1 });
 
-const deepAll = trpc.deep.all.useQuery();
+const deepAll = client.deep.all.useQuery();
 </script>
 
 <template>
@@ -19,11 +19,13 @@ const deepAll = trpc.deep.all.useQuery();
   <p v-else>{{ deeperById.data }}</p>
   <p v-if="deepAll.isFetching.value">Loading deep.all...</p>
   <p v-else>{{ deepAll.data }}</p>
-  <button @click="() => trpc.deep.deeper.byId.invalidate({ id: 1 })">
+  <button @click="() => client.deep.deeper.byId.invalidate({ id: 1 })">
     Invalidate deep.deeper.byId only
   </button>
-  <button @click="() => trpc.deep.deeper.invalidate()">
+  <button @click="() => client.deep.deeper.invalidate()">
     Invalidate deep.deeper router
   </button>
-  <button @click="() => trpc.deep.invalidate()">Invalidate deep router</button>
+  <button @click="() => client.deep.invalidate()">
+    Invalidate deep router
+  </button>
 </template>

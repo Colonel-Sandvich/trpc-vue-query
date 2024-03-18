@@ -1,12 +1,22 @@
-import type { FetchEsque } from "node_modules/@trpc/client/dist/internals/types.d.ts";
-import type { $Fetch } from "node_modules/nitropack/dist/index.d.ts";
-import { FetchError } from "ofetch";
+import type { FetchEsque } from "@trpc/client/dist/internals/types";
+import type { $Fetch } from "nitropack/dist";
+import type { FetchError } from "ofetch";
+
+function isFetchError(error: unknown): error is FetchError {
+  return error instanceof Error && error.name === "FetchError";
+}
 
 // Allows for SSR by using Nuxt's `$fetch` which turns api calls into local function calls.
-export function customFetchWrapper(fetch: $Fetch): FetchEsque {
+export function customFetchWrapper(fetch?: $Fetch): FetchEsque {
   return async (input: RequestInfo | URL, init?: RequestInit) => {
+    const fetch_ = fetch ?? globalThis.$fetch;
+
+    if (!fetch_) {
+      throw new Error("globalThis.$fetch is missing, you should be using Nuxt");
+    }
+
     try {
-      const response = await fetch.raw(
+      const response = await fetch_.raw(
         input.toString(),
         init as RequestInit & { method: "GET" }, // ts hack. Method should be: "GET" | "POST" | "PATCH" ...
       );
@@ -16,7 +26,7 @@ export function customFetchWrapper(fetch: $Fetch): FetchEsque {
         json: () => Promise.resolve(response._data),
       };
     } catch (e) {
-      if (e instanceof FetchError && e.response) {
+      if (isFetchError(e) && e.response) {
         return e.response;
       }
       throw e;

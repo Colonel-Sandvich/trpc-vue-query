@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { useIsFetching } from "@tanstack/vue-query";
 import { ref } from "vue";
-import { useTrpc } from "./trpc";
+import { useClient } from "./composables/useClient";
 
-const trpc = useTrpc();
+const client = useClient();
 
 const {
   data: helloName,
   isFetching,
   isError,
   error,
-} = trpc.helloName.useQuery();
+} = client.helloName.useQuery();
 
 const newName = ref("Jeff");
 
-const { mutate, variables, isPending } = trpc.changeName.useMutation({
-  onSuccess: () => trpc.helloName.invalidate(),
+const { mutate, variables, isPending } = client.changeName.useMutation({
+  onSuccess: () => client.helloName.invalidate(),
 });
 
 const isFetchingViaKey = useIsFetching({
-  queryKey: trpc.helloName.queryKey(),
+  queryKey: client.helloName.queryKey(),
 });
 </script>
 

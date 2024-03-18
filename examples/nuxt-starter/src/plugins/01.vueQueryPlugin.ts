@@ -1,7 +1,4 @@
-import type {
-  DehydratedState,
-  VueQueryPluginOptions,
-} from "@tanstack/vue-query";
+import type { DehydratedState } from "@tanstack/vue-query";
 import {
   QueryClient,
   VueQueryPlugin,
@@ -9,18 +6,18 @@ import {
   hydrate,
 } from "@tanstack/vue-query";
 
-// Provided from TanStack Query docs: https://tanstack.com/query/v5/docs/vue/guides/ssr
 // Important that this plugin comes before the `02.clientPlugin` since that has this plugin as a dependency
 export default defineNuxtPlugin((nuxt) => {
-  const vueQueryState = useState<DehydratedState | null>("vue-query");
-
   // Modify your Vue Query global settings here
   const queryClient = new QueryClient({
     defaultOptions: { queries: { staleTime: 5000 } },
   });
-  const options: VueQueryPluginOptions = { queryClient };
 
-  nuxt.vueApp.use(VueQueryPlugin, options);
+  nuxt.vueApp.use(VueQueryPlugin, { queryClient });
+
+  // Below is for SSR. Remove if you don't need this
+  // Provided from TanStack Query docs: https://tanstack.com/query/v5/docs/vue/guides/ssr
+  const vueQueryState = useState<DehydratedState | null>("vue-query");
 
   if (process.server) {
     nuxt.hooks.hook("app:rendered", () => {
