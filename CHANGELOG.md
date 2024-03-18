@@ -1,5 +1,13 @@
 # trpc-vue-query
 
+## 0.5.0
+
+### Minor Changes
+
+- 6e14e3a: Create vue plugin
+  Update docs
+  Clean up /examples
+
 ## 0.4.1
 
 ### Patch Changes
