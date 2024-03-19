@@ -88,7 +88,7 @@ export default defineNuxtPlugin(() => {
       links: [
         httpBatchLink({
           url: "/api/trpc",
-          headers: () => useRequestHeaders(),
+          headers: useRequestHeaders(),
           fetch: customFetchWrapper(), // Crucial for SSR
         }),
       ],
