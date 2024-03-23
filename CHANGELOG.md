@@ -1,5 +1,12 @@
 # trpc-vue-query
 
+## 0.6.0
+
+### Minor Changes
+
+- f321b9e: Add `useSuspenseQuery`, `prefetchQuery`
+  Reduce dependency on `cloneDeepUnref`
+
 ## 0.5.0
 
 ### Minor Changes
