@@ -224,7 +224,7 @@ function prefetchQueryInternal<
   this: { queryClient: QueryClient; trpcClient: any },
   path: string,
   input: Input<TProcedure>,
-  opts?: MaybeRefDeep<FetchQueryOptions<TData> & TrpcRequestOptions>,
+  opts?: MaybeRefDeep<CustomiseQueryOptionsKeys<FetchQueryOptions<TData>>>,
 ): Promise<void> {
   return this.queryClient.prefetchQuery({
     queryKey: getQueryKeyInternal([path], input, "query"),
