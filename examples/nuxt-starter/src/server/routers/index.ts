@@ -8,6 +8,9 @@ export const appRouter = router({
   changeName: publicProcedure.input(z.string()).mutation(({ input }) => {
     name = input;
   }),
+  plusOne: publicProcedure.input(z.number()).query(({ input }) => {
+    return input + 1;
+  }),
 });
 
 // export type definition of API

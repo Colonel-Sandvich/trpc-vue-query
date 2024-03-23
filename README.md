@@ -2,6 +2,47 @@
 
 A simple package to bridge the gap between [TRPC](https://trpc.io/) and [TanStack Query for Vue](https://tanstack.com/query/v5/docs/vue/overview) much like how TRPC has their own in-house [React Query Integration](https://trpc.io/docs/client/react)
 
+## Why this package?
+
+If you're using @tanstack/vue-query then you might know that working with query keys and query functions can sometimes become cumbersome.
+The creator of Tanstack Query, TkDodo, has said that ["Separating QueryKey from QueryFunction was a mistake"](https://tkdodo.eu/blog/the-query-options-api#query-factories).
+
+So this package tightly couples your keys and functions leading to brilliant DX :rocket:
+
+### Before:
+
+```ts
+const currentUserQuery = queryOptions({
+  queryKey: ["user", "current"],
+  queryFn: () => trpc.user.current.query(),
+});
+
+const { data } = useQuery(currentUserQuery);
+
+const { mutateAsync } = useMutation({
+  mutationFn: (input: UnwrapRef<typeof form>) => trpc.user.signUp.mutate(input),
+  onSuccess: async () => {
+    await useQueryClient().invalidateQueries({
+      queryKey: currentUserQuery.queryKey,
+    });
+    await navigateTo("/onboarding");
+  },
+});
+```
+
+### After:
+
+```ts
+const { data } = useClient().user.current.useQuery();
+
+const { mutateAsync } = useClient().user.signUp.useMutation({
+  onSuccess: async () => {
+    await useClient().user.current.invalidate();
+    await navigateTo("/onboarding");
+  },
+});
+```
+
 ## Install
 
 `pnpm i @colonel-sandvich/trpc-vue-query`

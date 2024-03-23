@@ -19,6 +19,7 @@ import { createFlatProxy, createRecursiveProxy } from "@trpc/server/shared";
 import {
   GetQueryData,
   Invalidate,
+  PrefetchQuery,
   QueryKey,
   SetQueryData,
   UseMutation,
@@ -31,10 +32,12 @@ type DecorateProcedure<TProcedure extends AnyProcedure> =
   TProcedure extends AnyQueryProcedure
     ? {
         useQuery: UseQuery<TProcedure>;
+        useSuspenseQuery: UseQuery<TProcedure>;
         invalidate: Invalidate<TProcedure>;
         queryKey: QueryKey<TProcedure>;
         getQueryData: GetQueryData<TProcedure>;
         setQueryData: SetQueryData<TProcedure>;
+        prefetchQuery: PrefetchQuery<TProcedure>;
       }
     : TProcedure extends AnyMutationProcedure
       ? {

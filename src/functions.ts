@@ -1,4 +1,6 @@
 import {
+  DataTag,
+  FetchQueryOptions,
   InvalidateOptions,
   InvalidateQueryFilters,
   MutationObserverResult,
@@ -19,7 +21,7 @@ import {
   AnyRouter,
   inferProcedureInput,
 } from "@trpc/server";
-import { MaybeRef, UnwrapRef } from "vue-demi";
+import { MaybeRef, UnwrapRef, onServerPrefetch, unref } from "vue-demi";
 import { TRPCQueryKey, getQueryKeyInternal } from "./helpers.ts";
 import {
   DistributiveOmit,
@@ -37,21 +39,30 @@ import { cloneDeepUnref, maybeReactiveToRefs } from "./utils.ts";
 export function createAugmentedClient<TRouter extends AnyRouter>(
   trpcClient: CreateTRPCProxyClient<TRouter>,
   queryClient: QueryClient,
-) {
+): any {
   const useQuery = useQueryInternal.bind({ trpcClient });
   const useMutation = useMutationInternal.bind({ trpcClient });
   const invalidate = invalidateInternal.bind({ queryClient });
   const getQueryData = getQueryDataInternal.bind({ queryClient });
   const setQueryData = setQueryDataInternal.bind({ queryClient });
+  const prefetchQuery = prefetchQueryInternal.bind({ queryClient, trpcClient });
+
+  const useSuspenseQueryInternal = ((...args) => {
+    const t = useQuery(...args);
+    onServerPrefetch(t.suspense);
+    return t;
+  }) as UseQuery<AnyQueryProcedure>;
 
   return {
     useQuery,
+    useSuspenseQuery: useSuspenseQueryInternal,
     useMutation,
     invalidate,
     queryKey: queryKeyInternal,
     mutationKey: queryKeyInternal,
     getQueryData,
     setQueryData,
+    prefetchQuery,
   } as const;
 }
 
@@ -99,8 +110,8 @@ function useQueryInternal(
 ): any {
   return vueUseQuery({
     queryKey: getQueryKeyInternal([path], input, "query"),
-    queryFn: () =>
-      this.trpcClient[path].query(cloneDeepUnref(input ?? {}), opts?.trpc),
+    queryFn: (context) =>
+      this.trpcClient[path].query(context.queryKey[1]?.input, opts?.trpc),
     ...maybeReactiveToRefs(opts),
   });
 }
@@ -142,13 +153,13 @@ async function invalidateInternal<TProcedure extends AnyQueryProcedure>(
   this: { queryClient: QueryClient },
   path: string,
   input: Input<TProcedure>,
-  filters?: MaybeRefDeep<InvalidateQueryFilters>,
+  filters?: MaybeRefDeep<Omit<InvalidateQueryFilters, "queryKey">>,
   opts?: MaybeRefDeep<InvalidateOptions>,
 ): Promise<void> {
   const queryKey = getQueryKeyInternal([path], input, "query");
 
   await this.queryClient.invalidateQueries(
-    { ...cloneDeepUnref(filters), queryKey },
+    { ...unref(filters), queryKey },
     opts,
   );
 }
@@ -160,8 +171,8 @@ export type Invalidate<TProcedure extends AnyQueryProcedure> = StripPath<
 function queryKeyInternal<TProcedure extends AnyProcedure>(
   path: string,
   input: Input<TProcedure>,
-): TRPCQueryKey {
-  return getQueryKeyInternal([path], input, "query");
+): DataTag<TRPCQueryKey, Output<TProcedure>> {
+  return getQueryKeyInternal([path], input, "query") as any;
 }
 
 export type QueryKey<TProcedure extends AnyProcedure> = StripPath<
@@ -204,4 +215,28 @@ function setQueryDataInternal<
 
 export type SetQueryData<TProcedure extends AnyQueryProcedure> = StripPath<
   typeof setQueryDataInternal<TProcedure>
+>;
+
+function prefetchQueryInternal<
+  TProcedure extends AnyQueryProcedure,
+  TData = Output<TProcedure>,
+>(
+  this: { queryClient: QueryClient; trpcClient: any },
+  path: string,
+  input: Input<TProcedure>,
+  opts?: MaybeRefDeep<FetchQueryOptions<TData> & TrpcRequestOptions>,
+): Promise<void> {
+  return this.queryClient.prefetchQuery({
+    queryKey: getQueryKeyInternal([path], input, "query"),
+    queryFn: (context) =>
+      this.trpcClient[path].query(
+        context.queryKey[1]?.input,
+        unref(opts)?.trpc,
+      ),
+    ...maybeReactiveToRefs(opts ?? {}),
+  });
+}
+
+export type PrefetchQuery<TProcedure extends AnyQueryProcedure> = StripPath<
+  typeof prefetchQueryInternal<TProcedure>
 >;

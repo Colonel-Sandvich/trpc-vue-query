@@ -11,15 +11,16 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
-    "nuxt": "^3.10.3",
+    "nuxt": "^3.11.1",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"
   },
   "dependencies": {
     "@colonel-sandvich/trpc-vue-query": "workspace:*",
-    "@tanstack/vue-query": "^5.24.1",
-    "@trpc/client": "^10.45.1",
-    "@trpc/server": "^10.45.1",
+    "@tanstack/vue-query": "^5.28.7",
+    "@tanstack/vue-query-devtools": "^5.28.7",
+    "@trpc/client": "^10.45.2",
+    "@trpc/server": "^10.45.2",
     "zod": "^3.22.4"
   }
 }

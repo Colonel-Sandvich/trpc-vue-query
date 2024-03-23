@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useIsFetching } from "@tanstack/vue-query";
+import { useIsFetching, useQueryClient } from "@tanstack/vue-query";
 import { ref } from "vue";
 import { useClient } from "./composables/useClient";
 
@@ -17,6 +17,11 @@ const newName = ref("Jeff");
 const { mutate, variables, isPending } = client.changeName.useMutation({
   onSuccess: () => client.helloName.invalidate(),
 });
+
+const y = client.helloName.getQueryData();
+// Tagged query keys if you need them
+const x = useQueryClient().getQueryData(client.helloName.queryKey());
+//    ^?
 
 const isFetchingViaKey = useIsFetching({
   queryKey: client.helloName.queryKey(),
