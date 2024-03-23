@@ -1,5 +1,11 @@
 # trpc-vue-query
 
+## 0.6.1
+
+### Patch Changes
+
+- 229af1f: Fix prefetchQuery options
+
 ## 0.6.0
 
 ### Minor Changes
