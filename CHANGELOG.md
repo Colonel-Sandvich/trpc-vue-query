@@ -1,5 +1,21 @@
 # trpc-vue-query
 
+## 0.7.0
+
+### Minor Changes
+
+- c95a356: # Breaking
+
+  - Users must now make the trpc proxy instance themselves and pass it to us when creating the augmented client. This is just simpler for the library to handle and most will already have this trpc instance lying around.
+
+  # Improvements
+
+  - Improved query invalidation and key generation
+
+  # Other
+
+  - Changed how we handle query keys internally
+
 ## 0.6.1
 
 ### Patch Changes
