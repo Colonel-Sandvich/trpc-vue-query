@@ -1,12 +1,12 @@
 import {
-  MaybeRefOrGetter,
   isReactive,
   isRef,
   reactive,
   toRefs,
   unref,
+  type MaybeRefOrGetter,
 } from "vue-demi";
-import { MaybeRefDeep } from "./typeUtils.ts";
+import type { DeepUnwrapRef, MaybeRefDeep } from "./typeUtils.ts";
 
 export function cloneDeep<T>(
   value: MaybeRefDeep<T>,
@@ -38,8 +38,10 @@ export function cloneDeep<T>(
   return value as T;
 }
 
-export function cloneDeepUnref<T>(obj: MaybeRefDeep<T>): T {
-  return cloneDeep(obj, (val) => {
+export function cloneDeepUnref<T extends MaybeRefDeep<any>>(
+  obj: T,
+): DeepUnwrapRef<T> {
+  return cloneDeep(obj as any, (val) => {
     if (isRef(val)) {
       return cloneDeepUnref(unref(val));
     }

@@ -5,4 +5,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [vue()],
   root: "./client",
+  server: {
+    port: 3000,
+  },
 });

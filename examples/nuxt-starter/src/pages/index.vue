@@ -21,14 +21,17 @@ const isFetchingViaKey = useIsFetching({
   queryKey: trpc.helloName.queryKey(),
 });
 
-const oneTimeFetch = async () => alert(await trpc.client.helloName.query());
+const oneTimeFetch = async () => alert(await trpc.$client.helloName.query());
 const oneTimeMutate = async () => {
-  await trpc.client.changeName.mutate("One time");
-  await trpc.helloName.invalidate(undefined, {});
+  await trpc.$client.changeName.mutate("One time");
+  await trpc.helloName.invalidate();
 };
 
 const counter = ref(0);
 const plusOneQuery = trpc.plusOne.useQuery(counter);
+
+await trpc.prefetchExample.prefetchQuery();
+console.log(`Prefetched query: ${trpc.prefetchExample.getQueryData()}`);
 </script>
 
 <template>

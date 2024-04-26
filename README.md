@@ -5,7 +5,7 @@ A simple package to bridge the gap between [TRPC](https://trpc.io/) and [TanStac
 ## Why this package?
 
 If you're using @tanstack/vue-query then you might know that working with query keys and query functions can sometimes become cumbersome.
-The creator of Tanstack Query, TkDodo, has said that ["Separating QueryKey from QueryFunction was a mistake"](https://tkdodo.eu/blog/the-query-options-api#query-factories).
+A lead maintainer of Tanstack Query, TkDodo, has said that ["Separating QueryKey from QueryFunction was a mistake"](https://tkdodo.eu/blog/the-query-options-api#query-factories).
 
 So this package tightly couples your keys and functions leading to brilliant DX :rocket:
 
@@ -58,20 +58,15 @@ import { VueQueryPlugin } from "@tanstack/vue-query";
 import { httpBatchLink } from "@trpc/client";
 import { createApp } from "vue";
 import App from "./src/App.vue";
+import { trpc } from "your-path-to-trpc-client";
+// ^ See https://trpc.io/docs/client/vanilla/setup#3-initialize-the-trpc-client
 
 export const app = createApp(App);
 
 app
   .use(VueQueryPlugin) // Make sure {@tanstack/vue-query}'s plugin goes first
   .use(TrpcVueQueryPlugin, {
-    trpcClient: {
-      // See trpc.io docs for your options here
-      links: [
-        httpBatchLink({
-          url: "http://localhost:3000",
-        }),
-      ],
-    },
+    trpcClient: trpc,
   })
   .mount("#app");
 ```
@@ -124,18 +119,17 @@ export default defineNuxtPlugin((nuxt) => {
 // src/plugins/02.clientPlugin.ts
 
 export default defineNuxtPlugin(() => {
-  const client = createTrpcVueClient<AppRouter>(
-    {
-      links: [
-        httpBatchLink({
-          url: "/api/trpc",
-          headers: useRequestHeaders(),
-          fetch: customFetchWrapper(), // Crucial for SSR
-        }),
-      ],
-    },
-    useQueryClient(),
-  );
+  const trpc = createTRPCProxyClient<AppRouter>({
+    links: [
+      httpBatchLink({
+        url: "/api/trpc",
+        headers: useRequestHeaders(),
+        fetch: customFetchWrapper(), // Crucial for SSR
+      }),
+    ],
+  });
+
+  const client = createTrpcVueClient(trpc, useQueryClient());
 
   return {
     provide: {
@@ -167,7 +161,7 @@ Go check out `/examples` to see some basic uses.
 
 `pnpm dev`
 
-If ports 5173 (client) and 3000 (server) are available then you should up and running
+If ports 3000 (client) and 3001 (server) are available then you should up and running
 
 ## Goals of the project
 

@@ -2,6 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "./dist",
+    "lib": ["ESNext", "DOM"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
@@ -17,7 +18,8 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true
   },
   "include": ["src/**/*.ts"]
 }

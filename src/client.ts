@@ -1,14 +1,11 @@
 import {
-  InvalidateOptions,
-  InvalidateQueryFilters,
-  QueryClient,
+  useQueryClient,
+  type InvalidateOptions,
+  type InvalidateQueryFilters,
+  type QueryClient,
 } from "@tanstack/vue-query";
-import {
-  CreateTRPCClientOptions,
-  CreateTRPCProxyClient,
-  createTRPCProxyClient,
-} from "@trpc/client";
-import {
+import type { CreateTRPCProxyClient } from "@trpc/client";
+import type {
   AnyMutationProcedure,
   AnyProcedure,
   AnyQueryProcedure,
@@ -16,7 +13,7 @@ import {
   ProcedureRouterRecord,
 } from "@trpc/server";
 import { createFlatProxy, createRecursiveProxy } from "@trpc/server/shared";
-import {
+import type {
   GetQueryData,
   Invalidate,
   PrefetchQuery,
@@ -24,9 +21,8 @@ import {
   SetQueryData,
   UseMutation,
   UseQuery,
-  createAugmentedClient,
 } from "./functions.ts";
-import { isPlainObject } from "./utils.ts";
+import { createAugmentedClient } from "./functions.ts";
 
 type DecorateProcedure<TProcedure extends AnyProcedure> =
   TProcedure extends AnyQueryProcedure
@@ -46,14 +42,15 @@ type DecorateProcedure<TProcedure extends AnyProcedure> =
         }
       : never;
 
-type DecoratedProcedureRecord<TProcedures extends ProcedureRouterRecord> = {
-  [TKey in keyof TProcedures]: TProcedures[TKey] extends AnyRouter
-    ? DecoratedProcedureRecord<TProcedures[TKey]["_def"]["record"]> &
-        DecorateRouter
-    : TProcedures[TKey] extends AnyProcedure
-      ? DecorateProcedure<TProcedures[TKey]>
-      : never;
-};
+type DecoratedProcedureRecord<TProcedures extends ProcedureRouterRecord> =
+  DecorateRouter & {
+    [TKey in keyof TProcedures]: TProcedures[TKey] extends AnyRouter
+      ? DecoratedProcedureRecord<TProcedures[TKey]["_def"]["record"]> &
+          DecorateRouter
+      : TProcedures[TKey] extends AnyProcedure
+        ? DecorateProcedure<TProcedures[TKey]>
+        : never;
+  };
 
 type DecorateRouter = {
   invalidate(
@@ -66,35 +63,29 @@ type DecorateRouter = {
 export type TrpcVueClient<TRouter extends AnyRouter> = DecoratedProcedureRecord<
   TRouter["_def"]["record"]
 > & {
-  client: CreateTRPCProxyClient<TRouter>;
+  $client: CreateTRPCProxyClient<TRouter>;
 };
 
 export function createTrpcVueClient<TRouter extends AnyRouter>(
-  opts: CreateTRPCClientOptions<TRouter> | CreateTRPCProxyClient<TRouter>,
-  queryClient: QueryClient,
+  trpcClient: CreateTRPCProxyClient<TRouter>,
+  queryClient?: QueryClient,
 ): TrpcVueClient<TRouter> {
-  const client = isPlainObject(opts)
-    ? createTRPCProxyClient(opts as CreateTRPCClientOptions<TRouter>)
-    : (opts as CreateTRPCProxyClient<TRouter>);
-
-  const augmentedClient = createAugmentedClient(client, queryClient);
+  const augmentedClient = createAugmentedClient(
+    trpcClient,
+    queryClient ?? useQueryClient(),
+  );
 
   return createFlatProxy((key) => {
-    if (key === "client") {
-      return client;
+    if (key === "$client") {
+      return trpcClient;
     }
-    return createRecursiveProxy((opts) => {
-      const args = opts.args;
-
-      const pathCopy = [key, ...opts.path];
+    return createRecursiveProxy(({ path, args }) => {
+      const pathCopy = [key, ...path];
 
       // The last arg is `.useQuery()` or `.useMutation()` etc.
       const lastArg = pathCopy.pop()! as keyof typeof augmentedClient;
 
-      // The `path` ends up being something like `post.byId`
-      const path = pathCopy.join(".");
-
-      return (augmentedClient[lastArg] as Function)(path, ...args);
+      return (augmentedClient[lastArg] as Function)(pathCopy, ...args);
     });
   });
 }

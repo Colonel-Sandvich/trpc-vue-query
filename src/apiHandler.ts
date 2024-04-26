@@ -1,16 +1,17 @@
-import {
+import type {
   AnyRouter,
   MaybePromise,
   ProcedureType,
-  TRPCError,
   inferRouterContext,
   inferRouterError,
 } from "@trpc/server";
-import { ResponseMeta, resolveHTTPResponse } from "@trpc/server/http";
-import { TRPCResponse } from "@trpc/server/rpc";
+import { TRPCError } from "@trpc/server";
+import type { ResponseMeta } from "@trpc/server/http";
+import { resolveHTTPResponse } from "@trpc/server/http";
+import type { TRPCResponse } from "@trpc/server/rpc";
 import { getErrorShape } from "@trpc/server/shared";
+import type { EventHandler } from "h3";
 import {
-  EventHandler,
   H3Event,
   createError,
   defineEventHandler,

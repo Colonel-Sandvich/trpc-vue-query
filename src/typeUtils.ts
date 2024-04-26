@@ -1,10 +1,11 @@
-import { OperationContext, TRPCClientErrorLike } from "@trpc/client";
-import {
+import type { TRPCClientErrorLike, TRPCRequestOptions } from "@trpc/client";
+import type {
   AnyProcedure,
+  DeepPartial,
   inferProcedureInput,
   inferProcedureOutput,
 } from "@trpc/server";
-import { Ref, ToRef, UnwrapRef } from "vue-demi";
+import type { Ref, ToRef, UnwrapRef } from "vue-demi";
 
 export type StripPath<T> = T extends (path: any, ...args: infer Args) => infer R
   ? (...args: Args) => R
@@ -92,9 +93,7 @@ export type DistributiveOmit<T, TKeyOfAny extends keyof any> = T extends any
   : never;
 
 export type TrpcRequestOptions = {
-  trpc?: {
-    context: OperationContext;
-  };
+  trpc?: TRPCRequestOptions;
 };
 
 export type TrpcError<TProcedure extends AnyProcedure> =
@@ -105,5 +104,12 @@ export type Input<TProcedure extends AnyProcedure> =
     ? void | undefined
     : MaybeRefDeep<inferProcedureInput<TProcedure>>;
 
+export type DeepPartialInput<TProcedure extends AnyProcedure> =
+  inferProcedureInput<TProcedure> extends void | undefined
+    ? void | undefined
+    : MaybeRefDeep<DeepPartial<inferProcedureInput<TProcedure>>>;
+
 export type Output<TProcedure extends AnyProcedure> =
   inferProcedureOutput<TProcedure>;
+
+export type KeysOfUnion<T> = T extends T ? keyof T : never;

@@ -1,6 +1,5 @@
-import {
+import type {
   DataTag,
-  FetchQueryOptions,
   InvalidateOptions,
   InvalidateQueryFilters,
   MutationObserverResult,
@@ -10,20 +9,27 @@ import {
   SetDataOptions,
   Updater,
   UseMutationReturnType,
+  FetchQueryOptions as VueFetchQueryOptions,
+} from "@tanstack/vue-query";
+import {
   useMutation as vueUseMutation,
   useQuery as vueUseQuery,
 } from "@tanstack/vue-query";
-import { CreateTRPCProxyClient } from "@trpc/client";
-import {
+import type { CreateTRPCProxyClient } from "@trpc/client";
+import { TRPCUntypedClient } from "@trpc/client";
+import type {
   AnyMutationProcedure,
   AnyProcedure,
   AnyQueryProcedure,
   AnyRouter,
   inferProcedureInput,
 } from "@trpc/server";
-import { MaybeRef, UnwrapRef, onServerPrefetch, unref } from "vue-demi";
-import { TRPCQueryKey, getQueryKeyInternal } from "./helpers.ts";
-import {
+import type { MaybeRef, UnwrapRef } from "vue-demi";
+import { onServerPrefetch, unref } from "vue-demi";
+import type { QueryType, TRPCQueryKey } from "./helpers.ts";
+import { getQueryKeyInternal, pathToString } from "./helpers.ts";
+import type {
+  DeepPartialInput,
   DistributiveOmit,
   FunctionOverloadToUnion,
   Input,
@@ -37,9 +43,11 @@ import {
 import { cloneDeepUnref, maybeReactiveToRefs } from "./utils.ts";
 
 export function createAugmentedClient<TRouter extends AnyRouter>(
-  trpcClient: CreateTRPCProxyClient<TRouter>,
+  trpcProxyClient: CreateTRPCProxyClient<TRouter>,
   queryClient: QueryClient,
-): any {
+) {
+  const trpcClient =
+    trpcProxyClient.__untypedClient as TRPCUntypedClient<TRouter>;
   const useQuery = useQueryInternal.bind({ trpcClient });
   const useMutation = useMutationInternal.bind({ trpcClient });
   const invalidate = invalidateInternal.bind({ queryClient });
@@ -47,15 +55,15 @@ export function createAugmentedClient<TRouter extends AnyRouter>(
   const setQueryData = setQueryDataInternal.bind({ queryClient });
   const prefetchQuery = prefetchQueryInternal.bind({ queryClient, trpcClient });
 
-  const useSuspenseQueryInternal = ((...args) => {
+  const useSuspenseQuery = ((...args) => {
     const t = useQuery(...args);
     onServerPrefetch(t.suspense);
     return t;
-  }) as UseQuery<AnyQueryProcedure>;
+  }) as typeof useQuery;
 
   return {
     useQuery,
-    useSuspenseQuery: useSuspenseQueryInternal,
+    useSuspenseQuery,
     useMutation,
     invalidate,
     queryKey: queryKeyInternal,
@@ -83,17 +91,18 @@ type AddInputRemoveQueryClient<
   ? (input: Input<TProcedure>, options?: UnwrapRewrapOption<O>) => R
   : never;
 
-type CustomiseQueryOptionsKeys<T> = Omit<
+type StripConflictKeys<T> = Omit<
   T,
   "queryKey" | "queryFn" | "queryHash" | "queryKeyHashFn"
-> &
-  TrpcRequestOptions;
+>;
+
+type StripAndAddTrpc<T> = StripConflictKeys<T> & TrpcRequestOptions;
 
 // VueQuery incorrectly slaps { initialData: ...} on to the already MaybeRef'd UseQueryOptions
 // So their types don't work with ref<{initialData: ...}> correctly.
 type UnwrapRewrapOption<
   TOption,
-  KeysRemoved = CustomiseQueryOptionsKeys<UnwrapRef<TOption>>,
+  KeysRemoved = StripAndAddTrpc<UnwrapRef<TOption>>,
 > = MaybeRef<
   TOption extends { initialData: infer D }
     ? KeysRemoved & { initialData: D }
@@ -103,15 +112,18 @@ type UnwrapRewrapOption<
 >;
 
 function useQueryInternal(
-  this: { trpcClient: any },
-  path: string,
+  this: { trpcClient: TRPCUntypedClient<AnyRouter> },
+  path: Array<string>,
   input: any,
   opts?: any,
-): any {
+) {
   return vueUseQuery({
-    queryKey: getQueryKeyInternal([path], input, "query"),
-    queryFn: (context) =>
-      this.trpcClient[path].query(context.queryKey[1]?.input, opts?.trpc),
+    queryKey: getQueryKeyInternal(path, input),
+    queryFn: ({ queryKey, signal }) =>
+      this.trpcClient.query(pathToString(path), queryKey[1]?.input, {
+        context: opts?.trpc?.context,
+        signal: opts?.trpc?.signal ?? signal,
+      }),
     ...maybeReactiveToRefs(opts),
   });
 }
@@ -137,26 +149,30 @@ type MutationResult<TData, TError, TVariables> = DistributiveOmit<
 >;
 
 function useMutationInternal(
-  this: { trpcClient: any },
-  path: string,
+  this: { trpcClient: TRPCUntypedClient<AnyRouter> },
+  path: Array<string>,
   opts?: any,
 ): any {
   return vueUseMutation({
-    mutationKey: getQueryKeyInternal([path], undefined, "query"),
+    mutationKey: getQueryKeyInternal(path, undefined),
     mutationFn: (input: any) =>
-      this.trpcClient[path].mutate(cloneDeepUnref(input), opts?.trpc),
+      this.trpcClient.mutation(
+        pathToString(path),
+        cloneDeepUnref(input),
+        opts?.trpc,
+      ),
     ...opts,
   });
 }
 
 async function invalidateInternal<TProcedure extends AnyQueryProcedure>(
   this: { queryClient: QueryClient },
-  path: string,
-  input: Input<TProcedure>,
+  path: Array<string>,
+  input?: DeepPartialInput<TProcedure>,
   filters?: MaybeRefDeep<Omit<InvalidateQueryFilters, "queryKey">>,
   opts?: MaybeRefDeep<InvalidateOptions>,
 ): Promise<void> {
-  const queryKey = getQueryKeyInternal([path], input, "query");
+  const queryKey = getQueryKeyInternal(path, input);
 
   await this.queryClient.invalidateQueries(
     { ...unref(filters), queryKey },
@@ -169,10 +185,11 @@ export type Invalidate<TProcedure extends AnyQueryProcedure> = StripPath<
 >;
 
 function queryKeyInternal<TProcedure extends AnyProcedure>(
-  path: string,
-  input: Input<TProcedure>,
+  path: Array<string>,
+  input?: DeepPartialInput<TProcedure>,
+  type?: QueryType,
 ): DataTag<TRPCQueryKey, Output<TProcedure>> {
-  return getQueryKeyInternal([path], input, "query") as any;
+  return getQueryKeyInternal(path, input, type) as any;
 }
 
 export type QueryKey<TProcedure extends AnyProcedure> = StripPath<
@@ -184,12 +201,11 @@ function getQueryDataInternal<
   TData = Output<TProcedure>,
 >(
   this: { queryClient: QueryClient },
-  path: string,
+  path: Array<string>,
   input: Input<TProcedure>,
+  type?: QueryType,
 ): TData | undefined {
-  return this.queryClient.getQueryData(
-    getQueryKeyInternal([path], input, "query"),
-  );
+  return this.queryClient.getQueryData(getQueryKeyInternal(path, input, type));
 }
 
 export type GetQueryData<TProcedure extends AnyQueryProcedure> = StripPath<
@@ -201,13 +217,14 @@ function setQueryDataInternal<
   TData = Output<TProcedure>,
 >(
   this: { queryClient: QueryClient },
-  path: string,
+  path: Array<string>,
   input: Input<TProcedure>,
   updater: Updater<NoInfer<TData> | undefined, NoInfer<TData> | undefined>,
+  type?: QueryType,
   options?: MaybeRefDeep<SetDataOptions>,
 ): TData | undefined {
   return this.queryClient.setQueryData(
-    getQueryKeyInternal([path], input, "query"),
+    getQueryKeyInternal(path, input, type),
     updater,
     options,
   );
@@ -217,23 +234,30 @@ export type SetQueryData<TProcedure extends AnyQueryProcedure> = StripPath<
   typeof setQueryDataInternal<TProcedure>
 >;
 
+type FetchQueryOptions<TData, TError = Error> = StripAndAddTrpc<
+  VueFetchQueryOptions<TData, TError, TData, TRPCQueryKey>
+>;
+
 function prefetchQueryInternal<
   TProcedure extends AnyQueryProcedure,
   TData = Output<TProcedure>,
 >(
-  this: { queryClient: QueryClient; trpcClient: any },
-  path: string,
+  this: { queryClient: QueryClient; trpcClient: TRPCUntypedClient<AnyRouter> },
+  path: Array<string>,
   input: Input<TProcedure>,
-  opts?: MaybeRefDeep<CustomiseQueryOptionsKeys<FetchQueryOptions<TData>>>,
+  opts?: MaybeRefDeep<FetchQueryOptions<TData>>,
+  type?: QueryType,
 ): Promise<void> {
+  const trpcOpts = cloneDeepUnref(unref(opts)?.trpc);
   return this.queryClient.prefetchQuery({
-    queryKey: getQueryKeyInternal([path], input, "query"),
+    queryKey: getQueryKeyInternal(path, input, type),
     queryFn: (context) =>
-      this.trpcClient[path].query(
+      this.trpcClient.query(
+        pathToString(path),
         context.queryKey[1]?.input,
-        unref(opts)?.trpc,
-      ),
-    ...maybeReactiveToRefs(opts ?? {}),
+        trpcOpts,
+      ) as Promise<TData>,
+    ...opts,
   });
 }
 

@@ -23,6 +23,9 @@ const y = client.helloName.getQueryData();
 const x = useQueryClient().getQueryData(client.helloName.queryKey());
 //    ^?
 
+const queryKey = client.reactiveToInput.queryKey();
+const queryKeyWithInput = client.reactiveToInput.queryKey(1);
+
 const isFetchingViaKey = useIsFetching({
   queryKey: client.helloName.queryKey(),
 });

@@ -19,10 +19,12 @@ const appRouter = router({
       all: sleepyProcedure.query(() => "deep.deeper.all"),
       byId: sleepyProcedure
         .input(z.object({ id: z.number() }))
-        .query(() => "deep.deeper.byId"),
+        .query(({ input }) => `deep.deeper.byId(${input.id})`),
     }),
     all: sleepyProcedure.query(() => "deep.all"),
   }),
+  other: sleepyProcedure.query(() => "other"),
+  // TODO
 });
 
 // Export type router type signature,
@@ -31,6 +33,6 @@ export type AppRouter = typeof appRouter;
 
 createHTTPServer({
   router: appRouter,
-}).listen(3000);
+}).listen(3001);
 
-console.log("Listening on 3000...");
+console.log("Listening on 3001...");
