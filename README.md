@@ -177,3 +177,7 @@ Please please please absolutely make an issue or PR for any bugs or feature requ
 ## Acknowledgments
 
 Big thanks to [Robert Soriano](https://github.com/wobsoriano) for his [trpc-nuxt](https://github.com/wobsoriano/trpc-nuxt) package that inspired this package.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Colonel-Sandvich/trpc-vue-query&type=Date)](https://star-history.com/#Colonel-Sandvich/trpc-vue-query&Date)

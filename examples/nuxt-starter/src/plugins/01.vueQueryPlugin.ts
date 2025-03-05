@@ -19,13 +19,13 @@ export default defineNuxtPlugin((nuxt) => {
   // Provided from TanStack Query docs: https://tanstack.com/query/v5/docs/vue/guides/ssr
   const vueQueryState = useState<DehydratedState | null>("vue-query");
 
-  if (process.server) {
+  if (import.meta.server) {
     nuxt.hooks.hook("app:rendered", () => {
       vueQueryState.value = dehydrate(queryClient);
     });
   }
 
-  if (process.client) {
+  if (import.meta.client) {
     nuxt.hooks.hook("app:created", () => {
       hydrate(queryClient, vueQueryState.value);
     });

@@ -3,6 +3,7 @@ import Name from "./Name.vue";
 import QueryKeys from "./QueryKeys.vue";
 import ReactivityTest from "./ReactivityTest.vue";
 import RouterInvalidation from "./RouterInvalidation.vue";
+import SkipToken from "./SkipToken.vue";
 </script>
 
 <template>
@@ -10,4 +11,5 @@ import RouterInvalidation from "./RouterInvalidation.vue";
   <ReactivityTest />
   <RouterInvalidation />
   <QueryKeys />
+  <SkipToken />
 </template>

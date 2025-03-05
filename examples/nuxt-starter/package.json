@@ -11,16 +11,17 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
-    "nuxt": "^3.11.2",
-    "vue": "^3.4.25",
-    "vue-router": "^4.3.2"
+    "nuxt": "^3.15.4",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
   },
   "dependencies": {
     "@colonel-sandvich/trpc-vue-query": "workspace:*",
-    "@tanstack/vue-query": "^5.32.0",
-    "@tanstack/vue-query-devtools": "^5.32.0",
-    "@trpc/client": "^10.45.2",
-    "@trpc/server": "^10.45.2",
-    "zod": "^3.23.4"
+    "@tanstack/vue-query": "^5.67.1",
+    "@tanstack/vue-query-devtools": "^5.67.1",
+    "@trpc/client": "11.0.0-rc.824",
+    "@trpc/server": "11.0.0-rc.824",
+    "typescript": "^5.8.2",
+    "zod": "^3.24.2"
   }
 }

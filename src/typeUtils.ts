@@ -1,11 +1,5 @@
-import type { TRPCClientErrorLike, TRPCRequestOptions } from "@trpc/client";
-import type {
-  AnyProcedure,
-  DeepPartial,
-  inferProcedureInput,
-  inferProcedureOutput,
-} from "@trpc/server";
-import type { Ref, ToRef, UnwrapRef } from "vue-demi";
+import type { TRPCRequestOptions } from "@trpc/client";
+import type { Ref, UnwrapRef } from "vue";
 
 export type StripPath<T> = T extends (path: any, ...args: infer Args) => infer R
   ? (...args: Args) => R
@@ -49,9 +43,14 @@ export type DeepUnwrapRef<T> = T extends UnwrapLeaf
         }
       : UnwrapRef<T>;
 
-export type ToRefs<T> = {
-  [K in keyof T]: T[K] extends Function ? T[K] : ToRef<T[K]>;
-};
+/**
+ * Makes the object recursively optional
+ */
+export type DeepPartial<TObject> = TObject extends object
+  ? {
+      [P in keyof TObject]?: DeepPartial<TObject[P]>;
+    }
+  : TObject;
 
 export type UnionToIntersection<U> = (
   U extends any ? (x: U) => void : never
@@ -96,20 +95,15 @@ export type TrpcRequestOptions = {
   trpc?: TRPCRequestOptions;
 };
 
-export type TrpcError<TProcedure extends AnyProcedure> =
-  TRPCClientErrorLike<TProcedure>;
+export type ResolverDef = {
+  input: any;
+  output: any;
+  transformer: boolean;
+  errorShape: any;
+};
 
-export type Input<TProcedure extends AnyProcedure> =
-  inferProcedureInput<TProcedure> extends void | undefined
-    ? void | undefined
-    : MaybeRefDeep<inferProcedureInput<TProcedure>>;
+export type MaybeRefDeepInput<Input> = Input extends void | undefined
+  ? void | undefined
+  : MaybeRefDeep<Input>;
 
-export type DeepPartialInput<TProcedure extends AnyProcedure> =
-  inferProcedureInput<TProcedure> extends void | undefined
-    ? void | undefined
-    : MaybeRefDeep<DeepPartial<inferProcedureInput<TProcedure>>>;
-
-export type Output<TProcedure extends AnyProcedure> =
-  inferProcedureOutput<TProcedure>;
-
-export type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type DeepPartialInput<Input> = MaybeRefDeepInput<DeepPartial<Input>>;

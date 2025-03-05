@@ -1,7 +1,7 @@
-import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { AppRouter } from "../server";
 
-export const trpc = createTRPCProxyClient<AppRouter>({
+export const trpc = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: "http://localhost:3001",

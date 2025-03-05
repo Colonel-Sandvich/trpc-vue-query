@@ -1,4 +1,4 @@
-import { experimental_standaloneMiddleware, initTRPC } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 
 /**
  * Initialization of tRPC backend
@@ -13,12 +13,10 @@ const t = initTRPC.create();
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
-const sleepyMiddleware = experimental_standaloneMiddleware().create(
-  async (opts) => {
-    await sleep(1000);
-    return opts.next();
-  },
-);
+const sleepyMiddleware = t.middleware(async (opts) => {
+  await sleep(1000);
+  return opts.next();
+});
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

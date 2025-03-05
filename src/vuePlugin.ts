@@ -1,13 +1,13 @@
 import { QueryClient, VUE_QUERY_CLIENT } from "@tanstack/vue-query";
-import type { inferRouterProxyClient } from "@trpc/client";
-import type { AnyRouter } from "@trpc/server";
-import type { App } from "vue-demi";
+import type { TRPCClient } from "@trpc/client";
+import type { AnyTRPCRouter } from "@trpc/server";
+import type { App } from "vue";
 import { createTrpcVueClient } from "./client.ts";
 
 export const clientKey = Symbol();
 
 export type Options = {
-  trpcClient: inferRouterProxyClient<AnyRouter>;
+  trpcClient: TRPCClient<AnyTRPCRouter>;
   queryClient?: QueryClient;
 };
 
@@ -22,7 +22,6 @@ export function TrpcVueQueryPlugin(app: App, options: Options) {
     );
   }
 
-  // @ts-expect-error
   const client = createTrpcVueClient(options.trpcClient, queryClient);
 
   app.provide(clientKey, client);

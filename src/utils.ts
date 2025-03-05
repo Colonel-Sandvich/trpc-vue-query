@@ -5,7 +5,7 @@ import {
   toRefs,
   unref,
   type MaybeRefOrGetter,
-} from "vue-demi";
+} from "vue";
 import type { DeepUnwrapRef, MaybeRefDeep } from "./typeUtils.ts";
 
 export function cloneDeep<T>(

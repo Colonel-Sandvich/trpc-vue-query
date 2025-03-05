@@ -4,15 +4,19 @@ import {
   type InvalidateQueryFilters,
   type QueryClient,
 } from "@tanstack/vue-query";
-import type { CreateTRPCProxyClient } from "@trpc/client";
+import type { TRPCClient } from "@trpc/client";
 import type {
-  AnyMutationProcedure,
-  AnyProcedure,
-  AnyQueryProcedure,
-  AnyRouter,
-  ProcedureRouterRecord,
+  AnyTRPCProcedure,
+  AnyTRPCRootTypes,
+  AnyTRPCRouter,
+  inferProcedureInput,
+  inferTransformedProcedureOutput,
+  TRPCProcedureType,
 } from "@trpc/server";
-import { createFlatProxy, createRecursiveProxy } from "@trpc/server/shared";
+import { createTRPCFlatProxy, createTRPCRecursiveProxy } from "@trpc/server";
+
+import type { RouterRecord } from "@trpc/server/unstable-core-do-not-import";
+import type { ResolverDef } from "src/typeUtils.ts";
 import type {
   GetQueryData,
   Invalidate,
@@ -24,50 +28,64 @@ import type {
 } from "./functions.ts";
 import { createAugmentedClient } from "./functions.ts";
 
-type DecorateProcedure<TProcedure extends AnyProcedure> =
-  TProcedure extends AnyQueryProcedure
+type DecorateProcedure<
+  TType extends TRPCProcedureType,
+  TDef extends ResolverDef,
+> = TType extends "query"
+  ? {
+      useQuery: UseQuery<TDef>;
+      useSuspenseQuery: UseQuery<TDef>;
+      invalidate: Invalidate<TDef>;
+      queryKey: QueryKey<TDef>;
+      getQueryData: GetQueryData<TDef>;
+      setQueryData: SetQueryData<TDef>;
+      prefetchQuery: PrefetchQuery<TDef>;
+    }
+  : TType extends "mutation"
     ? {
-        useQuery: UseQuery<TProcedure>;
-        useSuspenseQuery: UseQuery<TProcedure>;
-        invalidate: Invalidate<TProcedure>;
-        queryKey: QueryKey<TProcedure>;
-        getQueryData: GetQueryData<TProcedure>;
-        setQueryData: SetQueryData<TProcedure>;
-        prefetchQuery: PrefetchQuery<TProcedure>;
+        useMutation: UseMutation<TDef>;
+        mutationKey: QueryKey<TDef>;
       }
-    : TProcedure extends AnyMutationProcedure
-      ? {
-          useMutation: UseMutation<TProcedure>;
-          mutationKey: QueryKey<TProcedure>;
-        }
-      : never;
-
-type DecoratedProcedureRecord<TProcedures extends ProcedureRouterRecord> =
-  DecorateRouter & {
-    [TKey in keyof TProcedures]: TProcedures[TKey] extends AnyRouter
-      ? DecoratedProcedureRecord<TProcedures[TKey]["_def"]["record"]> &
-          DecorateRouter
-      : TProcedures[TKey] extends AnyProcedure
-        ? DecorateProcedure<TProcedures[TKey]>
-        : never;
-  };
+    : never;
 
 type DecorateRouter = {
   invalidate(
-    input?: undefined,
     filters?: InvalidateQueryFilters,
     options?: InvalidateOptions,
   ): Promise<void>;
 };
 
-export type TrpcVueClient<TRouter extends AnyRouter> = DecoratedProcedureRecord<
-  TRouter["_def"]["record"]
-> & {
-  $client: CreateTRPCProxyClient<TRouter>;
+type DecorateRouterRecord<
+  TRoot extends AnyTRPCRootTypes,
+  TRecord extends RouterRecord,
+> = DecorateRouter & {
+  [TKey in keyof TRecord]: TRecord[TKey] extends infer $Value
+    ? $Value extends RouterRecord
+      ? DecorateRouterRecord<TRoot, $Value>
+      : $Value extends AnyTRPCProcedure
+        ? DecorateProcedure<
+            $Value["_def"]["type"],
+            {
+              input: inferProcedureInput<$Value>;
+              output: inferTransformedProcedureOutput<TRoot, $Value>;
+              transformer: TRoot["transformer"];
+              errorShape: TRoot["errorShape"];
+            }
+          > &
+            DecorateRouter
+        : never
+    : never;
 };
 
-export function createTrpcVueClient<TRouter extends AnyRouter>(
-  trpcClient: CreateTRPCProxyClient<TRouter>,
+export type TrpcVueClient<TRouter extends AnyTRPCRouter> = DecorateRouterRecord<
+  TRouter["_def"]["_config"]["$types"],
+  TRouter["_def"]["record"]
+> & {
+  $client: TRPCClient<TRouter>;
+};
+
+export function createTrpcVueClient<TRouter extends AnyTRPCRouter>(
+  trpcClient: TRPCClient<TRouter>,
   queryClient?: QueryClient,
 ): TrpcVueClient<TRouter> {
   const augmentedClient = createAugmentedClient(
@@ -75,11 +93,11 @@ export function createTrpcVueClient<TRouter extends AnyRouter>(
     queryClient ?? useQueryClient(),
   );
 
-  return createFlatProxy((key) => {
+  return createTRPCFlatProxy((key) => {
     if (key === "$client") {
       return trpcClient;
     }
-    return createRecursiveProxy(({ path, args }) => {
+    return createTRPCRecursiveProxy(({ path, args }) => {
       const pathCopy = [key, ...path];
 
       // The last arg is `.useQuery()` or `.useMutation()` etc.

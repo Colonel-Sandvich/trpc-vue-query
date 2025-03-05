@@ -1,5 +1,5 @@
 import type { FetchEsque } from "@trpc/client/dist/internals/types";
-import type { $Fetch } from "nitropack/dist";
+import type { $Fetch } from "nitropack";
 import type { FetchError } from "ofetch";
 
 function isFetchError(error: unknown): error is FetchError {

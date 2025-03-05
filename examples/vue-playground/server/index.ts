@@ -5,7 +5,7 @@ import { publicProcedure, router, sleepyProcedure } from "./trpc";
 let name = "Jeff";
 
 const appRouter = router({
-  helloName: sleepyProcedure.query(() => `Hello there, ${name}!`),
+  helloName: publicProcedure.query(() => `Hello there, ${name}!`),
   changeName: sleepyProcedure
     .input(z.object({ input: z.string() }))
     .mutation(({ input }) => {
@@ -14,15 +14,15 @@ const appRouter = router({
   reactiveToInput: publicProcedure
     .input(z.number())
     .query(({ input }) => `Changed! ${input}`),
-  deep: router({
-    deeper: router({
+  deep: {
+    deeper: {
       all: sleepyProcedure.query(() => "deep.deeper.all"),
       byId: sleepyProcedure
         .input(z.object({ id: z.number() }))
         .query(({ input }) => `deep.deeper.byId(${input.id})`),
-    }),
+    },
     all: sleepyProcedure.query(() => "deep.all"),
-  }),
+  },
   other: sleepyProcedure.query(() => "other"),
   // TODO
 });

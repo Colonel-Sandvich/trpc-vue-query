@@ -1,81 +1,28 @@
+import type { AnyTRPCRouter, inferRouterContext } from "@trpc/server";
 import type {
-  AnyRouter,
-  MaybePromise,
-  ProcedureType,
-  inferRouterContext,
-  inferRouterError,
-} from "@trpc/server";
-import { TRPCError } from "@trpc/server";
-import type { ResponseMeta } from "@trpc/server/http";
-import { resolveHTTPResponse } from "@trpc/server/http";
-import type { TRPCResponse } from "@trpc/server/rpc";
-import { getErrorShape } from "@trpc/server/shared";
-import type { EventHandler } from "h3";
-import {
-  H3Event,
-  createError,
-  defineEventHandler,
-  getRequestURL,
-  isMethod,
-  readBody,
-} from "h3";
+  HTTPBaseHandlerOptions,
+  ResolveHTTPRequestOptionsContextFn,
+  TRPCRequestInfo,
+} from "@trpc/server/http";
+import { resolveResponse } from "@trpc/server/http";
+import type { EventHandler, NodeIncomingMessage } from "h3";
+import { H3Event, defineEventHandler, toWebRequest } from "h3";
 
 // Copied from @wobsoriano https://github.com/wobsoriano/trpc-nuxt/blob/main/src/index.ts
 
-export type CreateContextFn<TRouter extends AnyRouter> = (
+type MaybePromise<T> = T | Promise<T>;
+
+export type CreateContextFn<TRouter extends AnyTRPCRouter> = (
   event: H3Event,
+  innerOptions: { info: TRPCRequestInfo },
 ) => MaybePromise<inferRouterContext<TRouter>>;
 
-export interface ResponseMetaFnPayload<TRouter extends AnyRouter> {
-  data: TRPCResponse<unknown, inferRouterError<TRouter>>[];
-  ctx?: inferRouterContext<TRouter>;
-  paths?: string[];
-  type: ProcedureType | "unknown";
-  errors: TRPCError[];
-}
-
-export type ResponseMetaFn<TRouter extends AnyRouter> = (
-  opts: ResponseMetaFnPayload<TRouter>,
-) => ResponseMeta;
-
-export interface OnErrorPayload<TRouter extends AnyRouter> {
-  error: TRPCError;
-  type: ProcedureType | "unknown";
-  path: string | undefined;
-  req: H3Event["node"]["req"];
-  input: unknown;
-  ctx: undefined | inferRouterContext<TRouter>;
-}
-
-export type OnErrorFn<TRouter extends AnyRouter> = (
-  opts: OnErrorPayload<TRouter>,
-) => void;
-
-export interface ResolveHTTPRequestOptions<TRouter extends AnyRouter> {
-  /**
-   * The tRPC router to use.
-   * @see https://trpc.io/docs/router
-   */
-  router: TRouter;
-  /**
-   * An async function that returns the tRPC context.
-   * @see https://trpc.io/docs/context
-   */
+type H3HandlerOptions<TRouter extends AnyTRPCRouter> = HTTPBaseHandlerOptions<
+  TRouter,
+  NodeIncomingMessage
+> & {
   createContext?: CreateContextFn<TRouter>;
-  /**
-   * A function that returns the response meta.
-   * @see https://trpc.io/docs/caching#using-responsemeta-to-cache-responses
-   */
-  responseMeta?: ResponseMetaFn<TRouter>;
-  /**
-   * A function that is called when an error occurs.
-   * @see https://trpc.io/docs/error-handling#handling-errors
-   */
-  onError?: OnErrorFn<TRouter>;
-  batching?: {
-    enabled: boolean;
-  };
-}
+};
 
 function getPath(event: H3Event): string | null {
   const { params } = event.context;
@@ -87,70 +34,35 @@ function getPath(event: H3Event): string | null {
   return null;
 }
 
-export function createH3ApiHandler<TRouter extends AnyRouter>({
-  router,
-  createContext,
-  responseMeta,
-  onError,
-  batching,
-}: ResolveHTTPRequestOptions<TRouter>): EventHandler {
+export function createH3ApiHandler<TRouter extends AnyTRPCRouter>(
+  opts: H3HandlerOptions<TRouter>,
+): EventHandler {
   return defineEventHandler(async (event) => {
-    const { req, res } = event.node;
+    const createContext: ResolveHTTPRequestOptionsContextFn<TRouter> = async (
+      innerOpts,
+    ) => {
+      return await opts.createContext?.(event, innerOpts);
+    };
 
-    const $url = getRequestURL(event);
+    const { req } = event.node;
 
-    const path = getPath(event);
+    const path = getPath(event)!;
 
-    if (path === null) {
-      const error = getErrorShape({
-        config: router._def._config,
-        error: new TRPCError({
-          message:
-            'Query "trpc" not found - is the file named `[trpc]`.ts or `[...trpc].ts`?',
-          code: "INTERNAL_SERVER_ERROR",
-        }),
-        type: "unknown",
-        ctx: undefined,
-        path: undefined,
-        input: undefined,
-      });
-
-      throw createError({
-        statusCode: 500,
-        statusMessage: JSON.stringify(error),
-      });
-    }
-
-    const httpResponse = await resolveHTTPResponse({
-      batching,
-      router,
-      req: {
-        method: req.method!,
-        headers: req.headers,
-        body: isMethod(event, "GET") ? null : await readBody(event),
-        query: $url.searchParams,
-      },
+    const httpResponse = await resolveResponse({
+      ...opts,
+      req: toWebRequest(event),
+      error: null,
+      createContext,
       path,
-      createContext: async () => await createContext?.(event),
-      responseMeta,
-      onError: (o) => {
-        onError?.({
+      onError(o) {
+        opts.onError?.({
           ...o,
           req,
         });
       },
     });
 
-    const { status, headers, body } = httpResponse;
-
-    res.statusCode = status;
-
-    headers &&
-      Object.keys(headers).forEach((key) => {
-        res.setHeader(key, headers[key]!);
-      });
-
-    return body;
+    return httpResponse;
   });
 }
 
